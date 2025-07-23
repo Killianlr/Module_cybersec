@@ -17,7 +17,7 @@ try {
     $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
     // Donne les droits immédiatement après création
-    chmod($dbFile, 0666);  // lecture/écriture pour tous (à restreindre selon usage réel)
+    chmod($dbFile, 0600);  // lecture/écriture pour tous (à restreindre selon usage réel)
 
     $sql = "
         CREATE TABLE IF NOT EXISTS users (

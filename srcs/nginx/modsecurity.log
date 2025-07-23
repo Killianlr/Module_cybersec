@@ -1,0 +1,1138 @@
+---XIkaQjAU---A--
+[23/Jul/2025:15:56:05 +0000] 175328616543.979450 172.18.0.1 49490 172.18.0.3 80
+---XIkaQjAU---B--
+GET /login.html HTTP/1.1
+Sec-Fetch-User: ?1
+Sec-Fetch-Site: none
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:141.0) Gecko/20100101 Firefox/141.0
+Upgrade-Insecure-Requests: 1
+Connection: keep-alive
+Sec-Fetch-Mode: navigate
+Accept-Encoding: gzip, deflate, br, zstd
+Accept-Language: fr,fr-FR;q=0.8,en-US;q=0.5,en;q=0.3
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Sec-Fetch-Dest: document
+Host: localhost:8080
+Priority: u=0, i
+
+---XIkaQjAU---D--
+
+---XIkaQjAU---E--
+<!DOCTYPE html>\x0a<html lang="fr">\x0a<head>\x0a  <meta charset="UTF-8">\x0a  <title>Connexion utilisateur</title>\x0a</head>\x0a<body>\x0a  <h1>Connexion</h1>\x0a  <form id="loginForm">\x0a    <label>Email : <input type="email" name="email" required></label><br><br>\x0a    <label>Code 2FA (si activ\xc3\xa9) : <input type="text" name="code"></label><br><br>\x0a    <label>Mot de passe : <input type="password" name="password" required></label><br><br>\x0a    <button type="submit">Se connecter</button>\x0a  </form>\x0a\x0a  <p id="errorMessage" style="color: red;"></p>\x0a\x0a  <h2>Token JWT :</h2>\x0a  <pre id="tokenBox">(en attente)</pre>\x0a\x0a  <h2>Profil utilisateur :</h2>\x0a  <pre id="profileBox">(non charg\xc3\xa9)</pre>\x0a\x0a  <h2>D\xc3\xa9connexion :</h2>\x0a  <button id="logoutBtn">Se d\xc3\xa9connecter</button>\x0a\x0a  <button id="deleteAccountButton">Supprimer mon compte</button>\x0a\x0a  <button id="anonymizeAccountButton">Anonymiser mon compte</button>\x0a\x0a  <script>\x0a    const loginForm = document.getElementById('loginForm');\x0a    const tokenBox = document.getElementById('tokenBox');\x0a    const profileBox = document.getElementById('profileBox');\x0a    const logoutBtn = document.getElementById('logoutBtn');\x0a\x0a    // \xf0\x9f\x94\x81 Charger le token s'il est d\xc3\xa9j\xc3\xa0 en localStorage\x0a    let currentToken = localStorage.getItem('jwt_token');\x0a    if (currentToken) {\x0a      tokenBox.textContent = currentToken;\x0a      loadProfile();\x0a    }\x0a\x0a    // \xf0\x9f\x94\x90 Connexion\x0a    loginForm.addEventListener('submit', async (e) => {\x0a      e.preventDefault();\x0a\x0a      const formData = new FormData(loginForm);\x0a      const credentials = {\x0a        email: formData.get('email'),\x0a        password: formData.get('password'),\x0a        code: formData.get('code')\x0a      };\x0a\x0a      const res = await fetch('/login.php', {\x0a        method: 'POST',\x0a        headers: { 'Content-Type': 'application/json' },\x0a        body: JSON.stringify(credentials)\x0a      });\x0a\x0a      let result = {};\x0a      try {\x0a        result = await res.json();\x0a      } catch (e) {\x0a        result = { error: 'R\xc3\xa9ponse invalideeeeee du serveur' };\x0a      }\x0a\x0a      if (res.ok && result.token) {\x0a        currentToken = result.token;\x0a        localStorage.setItem('jwt_token', currentToken);\x0a        tokenBox.textContent = currentToken;\x0a        loadProfile();\x0a        document.getElementById('errorMessage').textContent = '';\x0a      } else {\x0a        tokenBox.textContent = '(\xc3\xa9chec)';\x0a        profileBox.textContent = '(non charg\xc3\xa9)';\x0a        document.getElementById('errorMessage').textContent =\x0a          result.error || 'Erreur inconnue (' + res.status + ')';\x0a      }\x0a    });\x0a\x0a    // \xf0\x9f\x91\xa4 Charger le profil prot\xc3\xa9g\xc3\xa9\x0a    async function loadProfile() {\x0a      if (!currentToken) return;\x0a\x0a      const res = await fetch('/rgpd/me.php', {\x0a        headers: { 'Authorization': 'Bearer ' + currentToken }\x0a      });\x0a\x0a      let result = {};\x0a      try {\x0a        result = await res.json();\x0a        profileBox.textContent = JSON.stringify(result, null, 2);\x0a      } catch (e) {\x0a        result = { error: 'R\xc3\xa9ponse invalide du serveur' };\x0a      }\x0a      // const result = await res.json();\x0a    }\x0a\x0a    document.getElementById('deleteAccountButton').addEventListener('click', async () => {\x0a    if (!currentToken) {\x0a      alert("Vous n'\xc3\xaates pas connect\xc3\xa9.");\x0a      return;\x0a    }\x0a\x0a    const confirmation = confirm("Es-tu s\xc3\xbbr de vouloir supprimer ton compte ?");\x0a    if (!confirmation) return;\x0a\x0a    const res = await fetch('/rgpd/delete_account.php', {\x0a      method: 'POST',\x0a      headers: {\x0a        'Authorization': 'Bearer ' + currentToken\x0a      }\x0a    });\x0a\x0a    const result = await res.json();\x0a\x0a    if (res.ok) {\x0a      alert(result.message);\x0a      localStorage.removeItem('jwt_token');\x0a      window.location.href = 'login.html';\x0a    } else {\x0a      alert(result.error || "Erreur inconnue.");\x0a    }\x0a    });\x0a\x0a    document.getElementById('anonymizeAccountButton').addEventListener('click', async () => {\x0a    if (!currentToken) {\x0a      alert("Vous n'\xc3\xaates pas connect\xc3\xa9.");\x0a      return;\x0a    }\x0a\x0a    const confirmation = confirm("Souhaitez-vous vraiment anonymiser votre compte ? Cette action est irr\xc3\xa9versible.");\x0a    if (!confirmation) return;\x0a\x0a    const res = await fetch('/rgpd/anonymize_account.php', {\x0a      method: 'POST',\x0a      headers: {\x0a        'Authorization': 'Bearer ' + currentToken\x0a      }\x0a    });\x0a\x0a    const result = await res.json();\x0a\x0a    if (res.ok) {\x0a      alert(result.message);\x0a      localStorage.removeItem('jwt_token');\x0a      window.location.href = 'login.html';\x0a    } else {\x0a      alert(result.error || "Erreur inconnue.");\x0a    }\x0a  });\x0a\x0a    // \xf0\x9f\x9a\xaa D\xc3\xa9connexion\x0a    logoutBtn.addEventListener('click', () => {\x0a      window.location.href = 'logout.html';\x0a      // currentToken = null;\x0a      // localStorage.removeItem('jwt_token');\x0a      // tokenBox.textContent = '(en attente)';\x0a      // profileBox.textContent = '(non charg\xc3\xa9)';\x0a      // loginForm.reset();\x0a      // alert('Vous \xc3\xaates d\xc3\xa9connect\xc3\xa9.');\x0a    });\x0a  </script>\x0a</body>\x0a</html>\x0a
+
+---XIkaQjAU---F--
+HTTP/1.1 200
+Server: nginx/1.25.3
+Date: Wed, 23 Jul 2025 15:56:05 GMT
+Content-Length: 4874
+Content-Type: text/html
+Last-Modified: Thu, 26 Jun 2025 21:06:58 GMT
+Connection: keep-alive
+ETag: "685db672-130a"
+
+---XIkaQjAU---H--
+
+---XIkaQjAU---I--
+
+---XIkaQjAU---J--
+
+---XIkaQjAU---Z--
+
+---r4Cr3tem---A--
+[23/Jul/2025:15:56:05 +0000] 175328616549.289197 172.18.0.1 49490 172.18.0.3 80
+---r4Cr3tem---B--
+GET /favicon.ico HTTP/1.1
+Host: localhost:8080
+Sec-Fetch-Dest: image
+Sec-Fetch-Mode: no-cors
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:141.0) Gecko/20100101 Firefox/141.0
+Priority: u=6
+Accept: image/avif,image/webp,image/png,image/svg+xml,image/*;q=0.8,*/*;q=0.5
+Accept-Language: fr,fr-FR;q=0.8,en-US;q=0.5,en;q=0.3
+Accept-Encoding: gzip, deflate, br, zstd
+Connection: keep-alive
+Referer: http://localhost:8080/login.html
+Sec-Fetch-Site: same-origin
+
+---r4Cr3tem---D--
+
+---r4Cr3tem---E--
+<html>\x0d\x0a<head><title>404 Not Found</title></head>\x0d\x0a<body>\x0d\x0a<center><h1>404 Not Found</h1></center>\x0d\x0a<hr><center>nginx/1.25.3</center>\x0d\x0a</body>\x0d\x0a</html>\x0d\x0a
+
+---r4Cr3tem---F--
+HTTP/1.1 404
+Server: nginx/1.25.3
+Date: Wed, 23 Jul 2025 15:56:05 GMT
+Content-Length: 153
+Content-Type: text/html
+Connection: keep-alive
+
+---r4Cr3tem---H--
+
+---r4Cr3tem---I--
+
+---r4Cr3tem---J--
+
+---r4Cr3tem---Z--
+
+---kNNo1tnE---A--
+[23/Jul/2025:16:38:31 +0000] 175328871151.915333 172.18.0.1 39964 172.18.0.3 80
+---kNNo1tnE---B--
+GET /register.html HTTP/1.1
+Sec-Fetch-User: ?1
+Sec-Fetch-Site: none
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:141.0) Gecko/20100101 Firefox/141.0
+Upgrade-Insecure-Requests: 1
+Connection: keep-alive
+Sec-Fetch-Mode: navigate
+Accept-Encoding: gzip, deflate, br, zstd
+Accept-Language: fr,fr-FR;q=0.8,en-US;q=0.5,en;q=0.3
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Sec-Fetch-Dest: document
+Host: localhost:8080
+Priority: u=0, i
+
+---kNNo1tnE---D--
+
+---kNNo1tnE---E--
+<!DOCTYPE html>\x0a<html lang="fr">\x0a<head>\x0a  <meta charset="UTF-8">\x0a  <title>Inscription</title>\x0a</head>\x0a<body>\x0a  <h1>Inscription</h1>\x0a  <form id="registerForm">\x0a    <label>Email : <input type="email" name="email" required></label><br><br>\x0a    <label>Mot de passe : <input type="password" name="password" required></label><br><br>\x0a    <button type="submit">S'inscrire</button>\x0a  </form>\x0a\x0a  <pre id="response"></pre>\x0a\x0a  <script>\x0a    const form = document.getElementById('registerForm');\x0a    const responseBox = document.getElementById('response');\x0a\x0a    form.addEventListener('submit', async (e) => {\x0a      e.preventDefault();\x0a\x0a      const formData = new FormData(form);\x0a      const data = {\x0a        email: formData.get('email'),\x0a        password: formData.get('password')\x0a      };\x0a\x0a      const res = await fetch('/register.php', {\x0a        method: 'POST',\x0a        headers: {\x0a          'Content-Type': 'application/json'\x0a        },\x0a        body: JSON.stringify(data)\x0a      });\x0a\x0a      const text = await res.text();\x0a      responseBox.textContent = `Status: ${res.status}\n\n${text}`;\x0a    });\x0a  </script>\x0a</body>\x0a</html>\x0a
+
+---kNNo1tnE---F--
+HTTP/1.1 200
+Server: nginx/1.25.3
+Date: Wed, 23 Jul 2025 16:38:31 GMT
+Content-Length: 1113
+Content-Type: text/html
+Last-Modified: Thu, 26 Jun 2025 21:06:58 GMT
+Connection: keep-alive
+ETag: "685db672-459"
+
+---kNNo1tnE---H--
+
+---kNNo1tnE---I--
+
+---kNNo1tnE---J--
+
+---kNNo1tnE---Z--
+
+---3mNgiXId---A--
+[23/Jul/2025:16:38:45 +0000] 175328872568.681662 172.18.0.1 39964 172.18.0.3 80
+---3mNgiXId---B--
+POST /register.php HTTP/1.1
+Connection: keep-alive
+Sec-Fetch-Mode: cors
+Content-Type: application/json
+Origin: http://localhost:8080
+Referer: http://localhost:8080/register.html
+Accept-Encoding: gzip, deflate, br, zstd
+Content-Length: 47
+Priority: u=0
+Accept-Language: fr,fr-FR;q=0.8,en-US;q=0.5,en;q=0.3
+Accept: */*
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:141.0) Gecko/20100101 Firefox/141.0
+Sec-Fetch-Site: same-origin
+Sec-Fetch-Dest: empty
+Host: localhost:8080
+
+---3mNgiXId---D--
+
+---3mNgiXId---E--
+Erreur : SQLSTATE[HY000]: General error: 8 attempt to write a readonly database
+
+---3mNgiXId---F--
+HTTP/1.1 500
+Server: nginx/1.25.3
+Date: Wed, 23 Jul 2025 16:38:45 GMT
+Content-Type: text/html; charset=UTF-8
+Connection: keep-alive
+X-Powered-By: PHP/8.2.29
+
+---3mNgiXId---H--
+
+---3mNgiXId---I--
+
+---3mNgiXId---J--
+
+---3mNgiXId---Z--
+
+---F8AZKLoL---A--
+[23/Jul/2025:16:42:02 +0000] 175328892271.411833 172.18.0.1 38024 172.18.0.3 80
+---F8AZKLoL---B--
+GET /register.html HTTP/1.1
+Sec-Fetch-User: ?1
+Sec-Fetch-Site: none
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:141.0) Gecko/20100101 Firefox/141.0
+Upgrade-Insecure-Requests: 1
+If-None-Match: "685db672-459"
+Connection: keep-alive
+Sec-Fetch-Mode: navigate
+Accept-Encoding: gzip, deflate, br, zstd
+Accept-Language: fr,fr-FR;q=0.8,en-US;q=0.5,en;q=0.3
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Sec-Fetch-Dest: document
+Host: localhost:8080
+If-Modified-Since: Thu, 26 Jun 2025 21:06:58 GMT
+Priority: u=0, i
+
+---F8AZKLoL---D--
+
+---F8AZKLoL---F--
+HTTP/1.1 304
+Server: nginx/1.25.3
+Date: Wed, 23 Jul 2025 16:42:02 GMT
+Last-Modified: Thu, 26 Jun 2025 21:06:58 GMT
+Connection: keep-alive
+ETag: "685db672-459"
+
+---F8AZKLoL---H--
+
+---F8AZKLoL---I--
+
+---F8AZKLoL---J--
+
+---F8AZKLoL---Z--
+
+---OiPToZfy---A--
+[23/Jul/2025:16:42:08 +0000] 175328892873.283629 172.18.0.1 38024 172.18.0.3 80
+---OiPToZfy---B--
+POST /register.php HTTP/1.1
+Connection: keep-alive
+Sec-Fetch-Mode: cors
+Content-Type: application/json
+Origin: http://localhost:8080
+Referer: http://localhost:8080/register.html
+Accept-Encoding: gzip, deflate, br, zstd
+Content-Length: 47
+Priority: u=0
+Accept-Language: fr,fr-FR;q=0.8,en-US;q=0.5,en;q=0.3
+Accept: */*
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:141.0) Gecko/20100101 Firefox/141.0
+Sec-Fetch-Site: same-origin
+Sec-Fetch-Dest: empty
+Host: localhost:8080
+
+---OiPToZfy---D--
+
+---OiPToZfy---E--
+Erreur : SQLSTATE[HY000]: General error: 8 attempt to write a readonly database
+
+---OiPToZfy---F--
+HTTP/1.1 500
+Server: nginx/1.25.3
+Date: Wed, 23 Jul 2025 16:42:08 GMT
+Content-Type: text/html; charset=UTF-8
+Connection: keep-alive
+X-Powered-By: PHP/8.2.29
+
+---OiPToZfy---H--
+
+---OiPToZfy---I--
+
+---OiPToZfy---J--
+
+---OiPToZfy---Z--
+
+---9mxPmcj9---A--
+[23/Jul/2025:16:48:00 +0000] 175328928019.009126 172.18.0.1 53024 172.18.0.3 80
+---9mxPmcj9---B--
+POST /register.php HTTP/1.1
+Connection: keep-alive
+Sec-Fetch-Mode: cors
+Content-Type: application/json
+Origin: http://localhost:8080
+Referer: http://localhost:8080/register.html
+Accept-Encoding: gzip, deflate, br, zstd
+Content-Length: 47
+Priority: u=0
+Accept-Language: fr,fr-FR;q=0.8,en-US;q=0.5,en;q=0.3
+Accept: */*
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:141.0) Gecko/20100101 Firefox/141.0
+Sec-Fetch-Site: same-origin
+Sec-Fetch-Dest: empty
+Host: localhost:8080
+
+---9mxPmcj9---D--
+
+---9mxPmcj9---E--
+Utilisateur enregistr\xc3\xa9 avec succ\xc3\xa8s \xe2\x9c\x85
+
+---9mxPmcj9---F--
+HTTP/1.1 200
+Server: nginx/1.25.3
+Date: Wed, 23 Jul 2025 16:48:00 GMT
+Content-Type: text/html; charset=UTF-8
+Connection: keep-alive
+X-Powered-By: PHP/8.2.29
+
+---9mxPmcj9---H--
+
+---9mxPmcj9---I--
+
+---9mxPmcj9---J--
+
+---9mxPmcj9---Z--
+
+---WDJFjrAP---A--
+[23/Jul/2025:17:04:48 +0000] 175329028865.015411 172.18.0.1 54986 172.18.0.3 80
+---WDJFjrAP---B--
+GET /register.html HTTP/1.1
+Sec-Fetch-User: ?1
+Sec-Fetch-Site: none
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:141.0) Gecko/20100101 Firefox/141.0
+Upgrade-Insecure-Requests: 1
+If-None-Match: "685db672-459"
+Connection: keep-alive
+Sec-Fetch-Mode: navigate
+Accept-Encoding: gzip, deflate, br, zstd
+Accept-Language: fr,fr-FR;q=0.8,en-US;q=0.5,en;q=0.3
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Sec-Fetch-Dest: document
+Host: localhost:8080
+If-Modified-Since: Thu, 26 Jun 2025 21:06:58 GMT
+Priority: u=0, i
+
+---WDJFjrAP---D--
+
+---WDJFjrAP---F--
+HTTP/1.1 304
+Server: nginx/1.25.3
+Date: Wed, 23 Jul 2025 17:04:48 GMT
+Last-Modified: Thu, 26 Jun 2025 21:06:58 GMT
+Connection: keep-alive
+ETag: "685db672-459"
+
+---WDJFjrAP---H--
+
+---WDJFjrAP---I--
+
+---WDJFjrAP---J--
+
+---WDJFjrAP---Z--
+
+---TQvRm8DT---A--
+[23/Jul/2025:17:04:48 +0000] 17532902883.643652 172.18.0.1 54986 172.18.0.3 80
+---TQvRm8DT---B--
+GET /favicon.ico HTTP/1.1
+Host: localhost:8080
+Sec-Fetch-Dest: image
+Sec-Fetch-Mode: no-cors
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:141.0) Gecko/20100101 Firefox/141.0
+Priority: u=6
+Accept: image/avif,image/webp,image/png,image/svg+xml,image/*;q=0.8,*/*;q=0.5
+Accept-Language: fr,fr-FR;q=0.8,en-US;q=0.5,en;q=0.3
+Accept-Encoding: gzip, deflate, br, zstd
+Connection: keep-alive
+Referer: http://localhost:8080/register.html
+Sec-Fetch-Site: same-origin
+
+---TQvRm8DT---D--
+
+---TQvRm8DT---E--
+<html>\x0d\x0a<head><title>404 Not Found</title></head>\x0d\x0a<body>\x0d\x0a<center><h1>404 Not Found</h1></center>\x0d\x0a<hr><center>nginx/1.25.3</center>\x0d\x0a</body>\x0d\x0a</html>\x0d\x0a
+
+---TQvRm8DT---F--
+HTTP/1.1 404
+Server: nginx/1.25.3
+Date: Wed, 23 Jul 2025 17:04:48 GMT
+Content-Length: 153
+Content-Type: text/html
+Connection: keep-alive
+
+---TQvRm8DT---H--
+
+---TQvRm8DT---I--
+
+---TQvRm8DT---J--
+
+---TQvRm8DT---Z--
+
+---7T9mCA1w---A--
+[23/Jul/2025:17:04:56 +0000] 175329029628.922907 172.18.0.1 46842 172.18.0.3 80
+---7T9mCA1w---B--
+POST /register.php HTTP/1.1
+Connection: keep-alive
+Sec-Fetch-Mode: cors
+Content-Type: application/json
+Origin: http://localhost:8080
+Referer: http://localhost:8080/register.html
+Accept-Encoding: gzip, deflate, br, zstd
+Content-Length: 46
+Priority: u=0
+Accept-Language: fr,fr-FR;q=0.8,en-US;q=0.5,en;q=0.3
+Accept: */*
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:141.0) Gecko/20100101 Firefox/141.0
+Sec-Fetch-Site: same-origin
+Sec-Fetch-Dest: empty
+Host: localhost:8080
+
+---7T9mCA1w---D--
+
+---7T9mCA1w---E--
+Utilisateur enregistr\xc3\xa9 avec succ\xc3\xa8s \xe2\x9c\x85
+
+---7T9mCA1w---F--
+HTTP/1.1 200
+Server: nginx/1.25.3
+Date: Wed, 23 Jul 2025 17:04:56 GMT
+Content-Type: text/html; charset=UTF-8
+Connection: keep-alive
+X-Powered-By: PHP/8.2.29
+
+---7T9mCA1w---H--
+
+---7T9mCA1w---I--
+
+---7T9mCA1w---J--
+
+---7T9mCA1w---Z--
+
+---t37Gb9Ax---A--
+[23/Jul/2025:17:05:17 +0000] 175329031774.520173 172.18.0.1 46842 172.18.0.3 80
+---t37Gb9Ax---B--
+GET /edit_account.html HTTP/1.1
+Sec-Fetch-User: ?1
+Sec-Fetch-Site: none
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:141.0) Gecko/20100101 Firefox/141.0
+Upgrade-Insecure-Requests: 1
+Connection: keep-alive
+Sec-Fetch-Mode: navigate
+Accept-Encoding: gzip, deflate, br, zstd
+Accept-Language: fr,fr-FR;q=0.8,en-US;q=0.5,en;q=0.3
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Sec-Fetch-Dest: document
+Host: localhost:8080
+Priority: u=0, i
+
+---t37Gb9Ax---D--
+
+---t37Gb9Ax---E--
+<!DOCTYPE html>\x0a<html lang="fr">\x0a<head>\x0a  <meta charset="UTF-8">\x0a  <title>Modifier mon compte</title>\x0a</head>\x0a<body>\x0a  <h1>Modifier mes informations</h1>\x0a\x0a  <form id="editForm">\x0a    <label>Nouvel email : <input type="email" name="email"></label><br><br>\x0a    <label>Nouveau mot de passe : <input type="password" name="password"></label><br><br>\x0a    <button type="submit">Mettre \xc3\xa0 jour</button>\x0a  </form>\x0a\x0a  <p id="result"></p>\x0a\x0a  <script>\x0a    const form = document.getElementById('editForm');\x0a    const resultBox = document.getElementById('result');\x0a    const token = localStorage.getItem('jwt_token');\x0a\x0a    form.addEventListener('submit', async (e) => {\x0a      e.preventDefault();\x0a\x0a      const formData = new FormData(form);\x0a      const data = {};\x0a\x0a      for (const [key, value] of formData.entries()) {\x0a        if (value.trim() !== '') {\x0a          data[key] = value;\x0a        }\x0a      }\x0a\x0a      if (Object.keys(data).length === 0) {\x0a        resultBox.textContent = 'Veuillez remplir au moins un champ.';\x0a        return;\x0a      }\x0a\x0a      const response = await fetch('/rgpd/edit_account.php', {\x0a        method: 'POST',\x0a        headers: {\x0a          'Content-Type': 'application/json',\x0a          'Authorization': 'Bearer ' + token\x0a        },\x0a        body: JSON.stringify(data)\x0a      });\x0a\x0a      const text = await response.text();\x0a      resultBox.textContent = text;\x0a    });\x0a  </script>\x0a</body>\x0a</html>\x0a
+
+---t37Gb9Ax---F--
+HTTP/1.1 200
+Server: nginx/1.25.3
+Date: Wed, 23 Jul 2025 17:05:17 GMT
+Content-Length: 1395
+Content-Type: text/html
+Last-Modified: Wed, 23 Jul 2025 16:38:05 GMT
+Connection: keep-alive
+ETag: "68810fed-573"
+
+---t37Gb9Ax---H--
+
+---t37Gb9Ax---I--
+
+---t37Gb9Ax---J--
+
+---t37Gb9Ax---Z--
+
+---tqWVsDeG---A--
+[23/Jul/2025:17:05:34 +0000] 175329033493.202469 172.18.0.1 46842 172.18.0.3 80
+---tqWVsDeG---B--
+POST /rgpd/edit_account.php HTTP/1.1
+Connection: keep-alive
+Sec-Fetch-Mode: cors
+Content-Type: application/json
+Origin: http://localhost:8080
+Referer: http://localhost:8080/edit_account.html
+Accept-Encoding: gzip, deflate, br, zstd
+Content-Length: 46
+Priority: u=0
+Accept-Language: fr,fr-FR;q=0.8,en-US;q=0.5,en;q=0.3
+Accept: */*
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:141.0) Gecko/20100101 Firefox/141.0
+Sec-Fetch-Site: same-origin
+Authorization: Bearer null
+Host: localhost:8080
+Sec-Fetch-Dest: empty
+
+---tqWVsDeG---D--
+
+---tqWVsDeG---E--
+<br />\x0a<b>Fatal error</b>:  Uncaught UnexpectedValueException: Wrong number of segments in /var/www/html/vendor/firebase/php-jwt/src/JWT.php:109\x0aStack trace:\x0a#0 /var/www/html/jwt.php(22): Firebase\JWT\JWT::decode('null', Object(Firebase\JWT\Key))\x0a#1 /var/www/html/auth.php(20): validate_jwt('null')\x0a#2 /var/www/html/rgpd/edit_account.php(7): require_auth()\x0a#3 {main}\x0a  thrown in <b>/var/www/html/vendor/firebase/php-jwt/src/JWT.php</b> on line <b>109</b><br />\x0a
+
+---tqWVsDeG---F--
+HTTP/1.1 200
+Server: nginx/1.25.3
+Date: Wed, 23 Jul 2025 17:05:34 GMT
+Content-Type: application/json
+Connection: keep-alive
+X-Powered-By: PHP/8.2.29
+
+---tqWVsDeG---H--
+
+---tqWVsDeG---I--
+
+---tqWVsDeG---J--
+
+---tqWVsDeG---Z--
+
+---ji9UgKit---A--
+[23/Jul/2025:17:09:25 +0000] 175329056515.511484 172.18.0.1 46350 172.18.0.3 80
+---ji9UgKit---B--
+GET /favicon.ico HTTP/1.1
+Host: localhost:8080
+Sec-Fetch-Dest: image
+Sec-Fetch-Mode: no-cors
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:141.0) Gecko/20100101 Firefox/141.0
+Priority: u=6
+Accept: image/avif,image/webp,image/png,image/svg+xml,image/*;q=0.8,*/*;q=0.5
+Accept-Language: fr,fr-FR;q=0.8,en-US;q=0.5,en;q=0.3
+Accept-Encoding: gzip, deflate, br, zstd
+Connection: keep-alive
+Referer: http://localhost:8080/login.html
+Sec-Fetch-Site: same-origin
+
+---ji9UgKit---D--
+
+---ji9UgKit---E--
+<html>\x0d\x0a<head><title>404 Not Found</title></head>\x0d\x0a<body>\x0d\x0a<center><h1>404 Not Found</h1></center>\x0d\x0a<hr><center>nginx/1.25.3</center>\x0d\x0a</body>\x0d\x0a</html>\x0d\x0a
+
+---ji9UgKit---F--
+HTTP/1.1 404
+Server: nginx/1.25.3
+Date: Wed, 23 Jul 2025 17:09:25 GMT
+Content-Length: 153
+Content-Type: text/html
+Connection: keep-alive
+
+---ji9UgKit---H--
+
+---ji9UgKit---I--
+
+---ji9UgKit---J--
+
+---ji9UgKit---Z--
+
+---YUvkzb4S---A--
+[23/Jul/2025:17:09:41 +0000] 175329058199.799731 172.18.0.1 44500 172.18.0.3 80
+---YUvkzb4S---B--
+POST /login.php HTTP/1.1
+Connection: keep-alive
+Sec-Fetch-Mode: cors
+Content-Type: application/json
+Origin: http://localhost:8080
+Referer: http://localhost:8080/login.html
+Accept-Encoding: gzip, deflate, br, zstd
+Content-Length: 57
+Priority: u=0
+Accept-Language: fr,fr-FR;q=0.8,en-US;q=0.5,en;q=0.3
+Accept: */*
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:141.0) Gecko/20100101 Firefox/141.0
+Sec-Fetch-Site: same-origin
+Sec-Fetch-Dest: empty
+Host: localhost:8080
+
+---YUvkzb4S---D--
+
+---YUvkzb4S---E--
+{"error":"Identifiants invalides"}
+
+---YUvkzb4S---F--
+HTTP/1.1 401
+Server: nginx/1.25.3
+Date: Wed, 23 Jul 2025 17:09:41 GMT
+Content-Type: application/json
+Connection: keep-alive
+X-Powered-By: PHP/8.2.29
+
+---YUvkzb4S---H--
+
+---YUvkzb4S---I--
+
+---YUvkzb4S---J--
+
+---YUvkzb4S---Z--
+
+---ormVASfV---A--
+[23/Jul/2025:17:09:44 +0000] 175329058445.542245 172.18.0.1 44500 172.18.0.3 80
+---ormVASfV---B--
+POST /login.php HTTP/1.1
+Connection: keep-alive
+Sec-Fetch-Mode: cors
+Content-Type: application/json
+Origin: http://localhost:8080
+Referer: http://localhost:8080/login.html
+Accept-Encoding: gzip, deflate, br, zstd
+Content-Length: 58
+Priority: u=0
+Accept-Language: fr,fr-FR;q=0.8,en-US;q=0.5,en;q=0.3
+Accept: */*
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:141.0) Gecko/20100101 Firefox/141.0
+Sec-Fetch-Site: same-origin
+Sec-Fetch-Dest: empty
+Host: localhost:8080
+
+---ormVASfV---D--
+
+---ormVASfV---E--
+{"error":"Identifiants invalides"}
+
+---ormVASfV---F--
+HTTP/1.1 401
+Server: nginx/1.25.3
+Date: Wed, 23 Jul 2025 17:09:44 GMT
+Content-Type: application/json
+Connection: keep-alive
+X-Powered-By: PHP/8.2.29
+
+---ormVASfV---H--
+
+---ormVASfV---I--
+
+---ormVASfV---J--
+
+---ormVASfV---Z--
+
+---A7uNqDCF---A--
+[23/Jul/2025:17:09:44 +0000] 175329058495.533990 172.18.0.1 44500 172.18.0.3 80
+---A7uNqDCF---B--
+POST /login.php HTTP/1.1
+Connection: keep-alive
+Sec-Fetch-Mode: cors
+Content-Type: application/json
+Origin: http://localhost:8080
+Referer: http://localhost:8080/login.html
+Accept-Encoding: gzip, deflate, br, zstd
+Content-Length: 58
+Priority: u=0
+Accept-Language: fr,fr-FR;q=0.8,en-US;q=0.5,en;q=0.3
+Accept: */*
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:141.0) Gecko/20100101 Firefox/141.0
+Sec-Fetch-Site: same-origin
+Sec-Fetch-Dest: empty
+Host: localhost:8080
+
+---A7uNqDCF---D--
+
+---A7uNqDCF---E--
+{"error":"Identifiants invalides"}
+
+---A7uNqDCF---F--
+HTTP/1.1 401
+Server: nginx/1.25.3
+Date: Wed, 23 Jul 2025 17:09:44 GMT
+Content-Type: application/json
+Connection: keep-alive
+X-Powered-By: PHP/8.2.29
+
+---A7uNqDCF---H--
+
+---A7uNqDCF---I--
+
+---A7uNqDCF---J--
+
+---A7uNqDCF---Z--
+
+---c6eeuEwf---A--
+[23/Jul/2025:17:09:45 +0000] 175329058519.672252 172.18.0.1 44500 172.18.0.3 80
+---c6eeuEwf---B--
+POST /login.php HTTP/1.1
+Connection: keep-alive
+Sec-Fetch-Mode: cors
+Content-Type: application/json
+Origin: http://localhost:8080
+Referer: http://localhost:8080/login.html
+Accept-Encoding: gzip, deflate, br, zstd
+Content-Length: 58
+Priority: u=0
+Accept-Language: fr,fr-FR;q=0.8,en-US;q=0.5,en;q=0.3
+Accept: */*
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:141.0) Gecko/20100101 Firefox/141.0
+Sec-Fetch-Site: same-origin
+Sec-Fetch-Dest: empty
+Host: localhost:8080
+
+---c6eeuEwf---D--
+
+---c6eeuEwf---E--
+{"error":"Identifiants invalides"}
+
+---c6eeuEwf---F--
+HTTP/1.1 401
+Server: nginx/1.25.3
+Date: Wed, 23 Jul 2025 17:09:45 GMT
+Content-Type: application/json
+Connection: keep-alive
+X-Powered-By: PHP/8.2.29
+
+---c6eeuEwf---H--
+
+---c6eeuEwf---I--
+
+---c6eeuEwf---J--
+
+---c6eeuEwf---Z--
+
+---Vv5SPm4V---A--
+[23/Jul/2025:17:09:47 +0000] 175329058726.029261 172.18.0.1 44500 172.18.0.3 80
+---Vv5SPm4V---B--
+GET /login.html HTTP/1.1
+Sec-Fetch-User: ?1
+Sec-Fetch-Site: none
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:141.0) Gecko/20100101 Firefox/141.0
+Upgrade-Insecure-Requests: 1
+If-None-Match: "685db672-130a"
+Connection: keep-alive
+Sec-Fetch-Mode: navigate
+Accept-Encoding: gzip, deflate, br, zstd
+Accept-Language: fr,fr-FR;q=0.8,en-US;q=0.5,en;q=0.3
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Sec-Fetch-Dest: document
+Host: localhost:8080
+If-Modified-Since: Thu, 26 Jun 2025 21:06:58 GMT
+Priority: u=0, i
+
+---Vv5SPm4V---D--
+
+---Vv5SPm4V---F--
+HTTP/1.1 304
+Server: nginx/1.25.3
+Date: Wed, 23 Jul 2025 17:09:47 GMT
+Last-Modified: Thu, 26 Jun 2025 21:06:58 GMT
+Connection: keep-alive
+ETag: "685db672-130a"
+
+---Vv5SPm4V---H--
+
+---Vv5SPm4V---I--
+
+---Vv5SPm4V---J--
+
+---Vv5SPm4V---Z--
+
+---Ek17qkE9---A--
+[23/Jul/2025:17:09:50 +0000] 175329059031.618001 172.18.0.1 44500 172.18.0.3 80
+---Ek17qkE9---B--
+POST /login.php HTTP/1.1
+Connection: keep-alive
+Sec-Fetch-Mode: cors
+Content-Type: application/json
+Origin: http://localhost:8080
+Referer: http://localhost:8080/login.html
+Accept-Encoding: gzip, deflate, br, zstd
+Content-Length: 57
+Priority: u=0
+Accept-Language: fr,fr-FR;q=0.8,en-US;q=0.5,en;q=0.3
+Accept: */*
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:141.0) Gecko/20100101 Firefox/141.0
+Sec-Fetch-Site: same-origin
+Sec-Fetch-Dest: empty
+Host: localhost:8080
+
+---Ek17qkE9---D--
+
+---Ek17qkE9---E--
+{"error":"Identifiants invalides"}
+
+---Ek17qkE9---F--
+HTTP/1.1 401
+Server: nginx/1.25.3
+Date: Wed, 23 Jul 2025 17:09:50 GMT
+Content-Type: application/json
+Connection: keep-alive
+X-Powered-By: PHP/8.2.29
+
+---Ek17qkE9---H--
+
+---Ek17qkE9---I--
+
+---Ek17qkE9---J--
+
+---Ek17qkE9---Z--
+
+---IrNAiwAs---A--
+[23/Jul/2025:17:10:12 +0000] 175329061275.447383 172.18.0.1 44500 172.18.0.3 80
+---IrNAiwAs---B--
+POST /login.php HTTP/1.1
+Connection: keep-alive
+Sec-Fetch-Mode: cors
+Content-Type: application/json
+Origin: http://localhost:8080
+Referer: http://localhost:8080/login.html
+Accept-Encoding: gzip, deflate, br, zstd
+Content-Length: 55
+Priority: u=0
+Accept-Language: fr,fr-FR;q=0.8,en-US;q=0.5,en;q=0.3
+Accept: */*
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:141.0) Gecko/20100101 Firefox/141.0
+Sec-Fetch-Site: same-origin
+Sec-Fetch-Dest: empty
+Host: localhost:8080
+
+---IrNAiwAs---D--
+
+---IrNAiwAs---E--
+{"error":"Identifiants invalides"}
+
+---IrNAiwAs---F--
+HTTP/1.1 401
+Server: nginx/1.25.3
+Date: Wed, 23 Jul 2025 17:10:12 GMT
+Content-Type: application/json
+Connection: keep-alive
+X-Powered-By: PHP/8.2.29
+
+---IrNAiwAs---H--
+
+---IrNAiwAs---I--
+
+---IrNAiwAs---J--
+
+---IrNAiwAs---Z--
+
+---LRHOUzMk---A--
+[23/Jul/2025:17:10:16 +0000] 175329061642.173046 172.18.0.1 44500 172.18.0.3 80
+---LRHOUzMk---B--
+GET /logout.html HTTP/1.1
+Sec-Fetch-Site: same-origin
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:141.0) Gecko/20100101 Firefox/141.0
+Upgrade-Insecure-Requests: 1
+Referer: http://localhost:8080/login.html
+Connection: keep-alive
+Sec-Fetch-Mode: navigate
+Accept-Encoding: gzip, deflate, br, zstd
+Accept-Language: fr,fr-FR;q=0.8,en-US;q=0.5,en;q=0.3
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Sec-Fetch-Dest: document
+Host: localhost:8080
+Sec-Fetch-User: ?1
+Priority: u=0, i
+
+---LRHOUzMk---D--
+
+---LRHOUzMk---E--
+<!DOCTYPE html>\x0a<html lang="fr">\x0a<head>\x0a  <meta charset="UTF-8">\x0a  <title>D\xc3\xa9connexion</title>\x0a</head>\x0a<body>\x0a  <h1>D\xc3\xa9connexion</h1>\x0a  <p id="message">D\xc3\xa9connexion en cours...</p>\x0a\x0a  <script>\x0a    // Supprimer le token du localStorage\x0a    localStorage.removeItem('jwt_token');\x0a\x0a    // Affiche un message de confirmation\x0a    document.getElementById('message').textContent = "Vous avez \xc3\xa9t\xc3\xa9 d\xc3\xa9connect\xc3\xa9.";\x0a\x0a    // Facultatif : rediriger vers login.html apr\xc3\xa8s 2 secondes\x0a    setTimeout(() => {\x0a      window.location.href = 'login.html';\x0a    }, 2000);\x0a  </script>\x0a</body>\x0a</html>\x0a
+
+---LRHOUzMk---F--
+HTTP/1.1 200
+Server: nginx/1.25.3
+Date: Wed, 23 Jul 2025 17:10:16 GMT
+Content-Length: 579
+Content-Type: text/html
+Last-Modified: Thu, 26 Jun 2025 21:06:58 GMT
+Connection: keep-alive
+ETag: "685db672-243"
+
+---LRHOUzMk---H--
+
+---LRHOUzMk---I--
+
+---LRHOUzMk---J--
+
+---LRHOUzMk---Z--
+
+---z1X4qE2o---A--
+[23/Jul/2025:17:10:29 +0000] 175329062987.536455 172.18.0.1 44500 172.18.0.3 80
+---z1X4qE2o---B--
+POST /login.php HTTP/1.1
+Connection: keep-alive
+Sec-Fetch-Mode: cors
+Content-Type: application/json
+Origin: http://localhost:8080
+Referer: http://localhost:8080/login.html
+Accept-Encoding: gzip, deflate, br, zstd
+Content-Length: 56
+Priority: u=0
+Accept-Language: fr,fr-FR;q=0.8,en-US;q=0.5,en;q=0.3
+Accept: */*
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:141.0) Gecko/20100101 Firefox/141.0
+Sec-Fetch-Site: same-origin
+Sec-Fetch-Dest: empty
+Host: localhost:8080
+
+---z1X4qE2o---D--
+
+---z1X4qE2o---E--
+{"token":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6OCwiZW1haWwiOiJ0ZXN0MkBnbWFpbC5jb20iLCJpYXQiOjE3NTMyOTA2MjksImV4cCI6MTc1MzI5NDIyOX0.ARVeOE8Qadi-MhDfydXLYa5r4LdHx2Ao6pkBtZ2xV74"}
+
+---z1X4qE2o---F--
+HTTP/1.1 200
+Server: nginx/1.25.3
+Date: Wed, 23 Jul 2025 17:10:29 GMT
+Content-Type: application/json
+Connection: keep-alive
+X-Powered-By: PHP/8.2.29
+
+---z1X4qE2o---H--
+
+---z1X4qE2o---I--
+
+---z1X4qE2o---J--
+
+---z1X4qE2o---Z--
+
+---whf12RMT---A--
+[23/Jul/2025:17:10:29 +0000] 175329062938.593643 172.18.0.1 44500 172.18.0.3 80
+---whf12RMT---B--
+GET /rgpd/me.php HTTP/1.1
+Sec-Fetch-Site: same-origin
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:141.0) Gecko/20100101 Firefox/141.0
+Connection: keep-alive
+Sec-Fetch-Mode: cors
+Referer: http://localhost:8080/login.html
+Accept-Encoding: gzip, deflate, br, zstd
+Accept-Language: fr,fr-FR;q=0.8,en-US;q=0.5,en;q=0.3
+Accept: */*
+Sec-Fetch-Dest: empty
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6OCwiZW1haWwiOiJ0ZXN0MkBnbWFpbC5jb20iLCJpYXQiOjE3NTMyOTA2MjksImV4cCI6MTc1MzI5NDIyOX0.ARVeOE8Qadi-MhDfydXLYa5r4LdHx2Ao6pkBtZ2xV74
+Host: localhost:8080
+Priority: u=4
+
+---whf12RMT---D--
+
+---whf12RMT---E--
+{"me":{"id":8,"email":"test2@gmail.com","created_at":"2025-07-23 17:04:56"}}
+
+---whf12RMT---F--
+HTTP/1.1 200
+Server: nginx/1.25.3
+Date: Wed, 23 Jul 2025 17:10:29 GMT
+Content-Type: application/json
+Connection: keep-alive
+X-Powered-By: PHP/8.2.29
+
+---whf12RMT---H--
+
+---whf12RMT---I--
+
+---whf12RMT---J--
+
+---whf12RMT---Z--
+
+---4EEEOrqd---A--
+[23/Jul/2025:17:10:43 +0000] 175329064346.708650 172.18.0.1 44500 172.18.0.3 80
+---4EEEOrqd---B--
+GET /edit_account.html HTTP/1.1
+Sec-Fetch-User: ?1
+Sec-Fetch-Site: none
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:141.0) Gecko/20100101 Firefox/141.0
+Upgrade-Insecure-Requests: 1
+If-None-Match: "68810fed-573"
+Connection: keep-alive
+Sec-Fetch-Mode: navigate
+Accept-Encoding: gzip, deflate, br, zstd
+Accept-Language: fr,fr-FR;q=0.8,en-US;q=0.5,en;q=0.3
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Sec-Fetch-Dest: document
+Host: localhost:8080
+If-Modified-Since: Wed, 23 Jul 2025 16:38:05 GMT
+Priority: u=0, i
+
+---4EEEOrqd---D--
+
+---4EEEOrqd---F--
+HTTP/1.1 304
+Server: nginx/1.25.3
+Date: Wed, 23 Jul 2025 17:10:43 GMT
+Last-Modified: Wed, 23 Jul 2025 16:38:05 GMT
+Connection: keep-alive
+ETag: "68810fed-573"
+
+---4EEEOrqd---H--
+
+---4EEEOrqd---I--
+
+---4EEEOrqd---J--
+
+---4EEEOrqd---Z--
+
+---CdiwtIFm---A--
+[23/Jul/2025:17:10:58 +0000] 175329065851.875749 172.18.0.1 44500 172.18.0.3 80
+---CdiwtIFm---B--
+POST /rgpd/edit_account.php HTTP/1.1
+Connection: keep-alive
+Sec-Fetch-Mode: cors
+Content-Type: application/json
+Origin: http://localhost:8080
+Referer: http://localhost:8080/edit_account.html
+Accept-Encoding: gzip, deflate, br, zstd
+Content-Length: 46
+Priority: u=0
+Accept-Language: fr,fr-FR;q=0.8,en-US;q=0.5,en;q=0.3
+Accept: */*
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:141.0) Gecko/20100101 Firefox/141.0
+Sec-Fetch-Site: same-origin
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6OCwiZW1haWwiOiJ0ZXN0MkBnbWFpbC5jb20iLCJpYXQiOjE3NTMyOTA2MjksImV4cCI6MTc1MzI5NDIyOX0.ARVeOE8Qadi-MhDfydXLYa5r4LdHx2Ao6pkBtZ2xV74
+Host: localhost:8080
+Sec-Fetch-Dest: empty
+
+---CdiwtIFm---D--
+
+---CdiwtIFm---E--
+{"message":"Modifications enregistr\u00e9es avec succ\u00e8s."}
+
+---CdiwtIFm---F--
+HTTP/1.1 200
+Server: nginx/1.25.3
+Date: Wed, 23 Jul 2025 17:10:58 GMT
+Content-Type: application/json
+Connection: keep-alive
+X-Powered-By: PHP/8.2.29
+
+---CdiwtIFm---H--
+
+---CdiwtIFm---I--
+
+---CdiwtIFm---J--
+
+---CdiwtIFm---Z--
+
+---jC7savoU---A--
+[23/Jul/2025:17:11:05 +0000] 175329066580.816360 172.18.0.1 44500 172.18.0.3 80
+---jC7savoU---B--
+GET /rgpd/me.php HTTP/1.1
+Sec-Fetch-Site: same-origin
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:141.0) Gecko/20100101 Firefox/141.0
+Connection: keep-alive
+Sec-Fetch-Mode: cors
+Referer: http://localhost:8080/login.html
+Accept-Encoding: gzip, deflate, br, zstd
+Accept-Language: fr,fr-FR;q=0.8,en-US;q=0.5,en;q=0.3
+Accept: */*
+Sec-Fetch-Dest: empty
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6OCwiZW1haWwiOiJ0ZXN0MkBnbWFpbC5jb20iLCJpYXQiOjE3NTMyOTA2MjksImV4cCI6MTc1MzI5NDIyOX0.ARVeOE8Qadi-MhDfydXLYa5r4LdHx2Ao6pkBtZ2xV74
+Host: localhost:8080
+Priority: u=4
+
+---jC7savoU---D--
+
+---jC7savoU---E--
+{"me":{"id":8,"email":"test3@gmail.com","created_at":"2025-07-23 17:04:56"}}
+
+---jC7savoU---F--
+HTTP/1.1 200
+Server: nginx/1.25.3
+Date: Wed, 23 Jul 2025 17:11:05 GMT
+Content-Type: application/json
+Connection: keep-alive
+X-Powered-By: PHP/8.2.29
+
+---jC7savoU---H--
+
+---jC7savoU---I--
+
+---jC7savoU---J--
+
+---jC7savoU---Z--
+
+---aiSPCk6D---A--
+[23/Jul/2025:17:11:24 +0000] 175329068419.782987 172.18.0.1 44500 172.18.0.3 80
+---aiSPCk6D---B--
+POST /login.php HTTP/1.1
+Connection: keep-alive
+Sec-Fetch-Mode: cors
+Content-Type: application/json
+Origin: http://localhost:8080
+Referer: http://localhost:8080/login.html
+Accept-Encoding: gzip, deflate, br, zstd
+Content-Length: 56
+Priority: u=0
+Accept-Language: fr,fr-FR;q=0.8,en-US;q=0.5,en;q=0.3
+Accept: */*
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:141.0) Gecko/20100101 Firefox/141.0
+Sec-Fetch-Site: same-origin
+Sec-Fetch-Dest: empty
+Host: localhost:8080
+
+---aiSPCk6D---D--
+
+---aiSPCk6D---E--
+{"token":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6OCwiZW1haWwiOiJ0ZXN0M0BnbWFpbC5jb20iLCJpYXQiOjE3NTMyOTA2ODQsImV4cCI6MTc1MzI5NDI4NH0.8_sTZUbYWAS9u_owgdjQH5QGqjJF5v8nQZcZA3UoVkM"}
+
+---aiSPCk6D---F--
+HTTP/1.1 200
+Server: nginx/1.25.3
+Date: Wed, 23 Jul 2025 17:11:24 GMT
+Content-Type: application/json
+Connection: keep-alive
+X-Powered-By: PHP/8.2.29
+
+---aiSPCk6D---H--
+
+---aiSPCk6D---I--
+
+---aiSPCk6D---J--
+
+---aiSPCk6D---Z--
+
+---HxdQD8bq---A--
+[23/Jul/2025:17:11:24 +0000] 175329068446.395185 172.18.0.1 44500 172.18.0.3 80
+---HxdQD8bq---B--
+GET /rgpd/me.php HTTP/1.1
+Sec-Fetch-Site: same-origin
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:141.0) Gecko/20100101 Firefox/141.0
+Connection: keep-alive
+Sec-Fetch-Mode: cors
+Referer: http://localhost:8080/login.html
+Accept-Encoding: gzip, deflate, br, zstd
+Accept-Language: fr,fr-FR;q=0.8,en-US;q=0.5,en;q=0.3
+Accept: */*
+Sec-Fetch-Dest: empty
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6OCwiZW1haWwiOiJ0ZXN0M0BnbWFpbC5jb20iLCJpYXQiOjE3NTMyOTA2ODQsImV4cCI6MTc1MzI5NDI4NH0.8_sTZUbYWAS9u_owgdjQH5QGqjJF5v8nQZcZA3UoVkM
+Host: localhost:8080
+Priority: u=4
+
+---HxdQD8bq---D--
+
+---HxdQD8bq---E--
+{"me":{"id":8,"email":"test3@gmail.com","created_at":"2025-07-23 17:04:56"}}
+
+---HxdQD8bq---F--
+HTTP/1.1 200
+Server: nginx/1.25.3
+Date: Wed, 23 Jul 2025 17:11:24 GMT
+Content-Type: application/json
+Connection: keep-alive
+X-Powered-By: PHP/8.2.29
+
+---HxdQD8bq---H--
+
+---HxdQD8bq---I--
+
+---HxdQD8bq---J--
+
+---HxdQD8bq---Z--
+
+---cLCEex6s---A--
+[23/Jul/2025:17:20:08 +0000] 175329120831.203264 172.18.0.1 41042 172.18.0.3 80
+---cLCEex6s---B--
+GET /edit_account.html HTTP/1.1
+Sec-Fetch-User: ?1
+Sec-Fetch-Site: none
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:141.0) Gecko/20100101 Firefox/141.0
+Upgrade-Insecure-Requests: 1
+If-None-Match: "68810fed-573"
+Connection: keep-alive
+Sec-Fetch-Mode: navigate
+Accept-Encoding: gzip, deflate, br, zstd
+Accept-Language: fr,fr-FR;q=0.8,en-US;q=0.5,en;q=0.3
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Sec-Fetch-Dest: document
+Host: localhost:8080
+If-Modified-Since: Wed, 23 Jul 2025 16:38:05 GMT
+Priority: u=0, i
+
+---cLCEex6s---D--
+
+---cLCEex6s---E--
+<!DOCTYPE html>\x0a<html lang="fr">\x0a<head>\x0a  <meta charset="UTF-8">\x0a  <title>Modifier mon compte</title>\x0a  <script>\x0a    const token = localStorage.getItem('jwt_token');\x0a    if (!token) {\x0a      alert("\xe2\x9a\xa0\xef\xb8\x8f Vous devez \xc3\xaatre connect\xc3\xa9 pour acc\xc3\xa9der \xc3\xa0 cette page.");\x0a      window.location.href = "login.html";\x0a    }\x0a  </script>\x0a</head>\x0a<body>\x0a  <h1>Modifier mes informations</h1>\x0a\x0a  <form id="editForm">\x0a    <label>Nouvel email : <input type="email" name="email"></label><br><br>\x0a    <label>Nouveau mot de passe : <input type="password" name="password"></label><br><br>\x0a    <button type="submit">Mettre \xc3\xa0 jour</button>\x0a  </form>\x0a\x0a  <p id="result"></p>\x0a\x0a  <script>\x0a    const form = document.getElementById('editForm');\x0a    const resultBox = document.getElementById('result');\x0a    const token = localStorage.getItem('jwt_token');\x0a\x0a    form.addEventListener('submit', async (e) => {\x0a      e.preventDefault();\x0a\x0a      const formData = new FormData(form);\x0a      const data = {};\x0a\x0a      for (const [key, value] of formData.entries()) {\x0a        if (value.trim() !== '') {\x0a          data[key] = value;\x0a        }\x0a      }\x0a\x0a      if (Object.keys(data).length === 0) {\x0a        resultBox.textContent = 'Veuillez remplir au moins un champ.';\x0a        return;\x0a      }\x0a\x0a      const response = await fetch('/rgpd/edit_account.php', {\x0a        method: 'POST',\x0a        headers: {\x0a          'Content-Type': 'application/json',\x0a          'Authorization': 'Bearer ' + token\x0a        },\x0a        body: JSON.stringify(data)\x0a      });\x0a\x0a      const text = await response.text();\x0a      resultBox.textContent = text;\x0a    });\x0a  </script>\x0a</body>\x0a</html>\x0a
+
+---cLCEex6s---F--
+HTTP/1.1 200
+Server: nginx/1.25.3
+Date: Wed, 23 Jul 2025 17:20:08 GMT
+Content-Length: 1617
+Content-Type: text/html
+Last-Modified: Wed, 23 Jul 2025 17:20:00 GMT
+Connection: keep-alive
+ETag: "688119c0-651"
+
+---cLCEex6s---H--
+
+---cLCEex6s---I--
+
+---cLCEex6s---J--
+
+---cLCEex6s---Z--
+
