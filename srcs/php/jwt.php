@@ -1,10 +1,11 @@
 <?php
 require_once 'vendor/autoload.php';
+require_once 'vault.php';
 
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 
-$JWT_SECRET = 'super-secret-key'; // à sécuriser avec Vault plus tard
+$JWT_SECRET = get_jwt_secret_from_vault();
 
 function generate_jwt($data) {
     global $JWT_SECRET;
