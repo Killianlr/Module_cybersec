@@ -1,17 +1,28 @@
 #!/bin/sh
 
-# Crée le dossier s'il n'existe pas
-mkdir -p /var/www/html/data
+echo "Initialisation de l’environnement SQLite..."
 
-# Donne les bons droits au dossier
-chown -R www-data:www-data /var/www/html/data
-chmod 700 /var/www/html/data
+# Crée le dossier du volume
+mkdir -p /var/sqlite-data
 
-# Si la base existe déjà, on ajuste ses permissions
-if [ -f /var/www/html/data/users.sqlite ]; then
-    chown www-data:www-data /var/www/html/data/users.sqlite
-    chmod 600 /var/www/html/data/users.sqlite
+# Fixer les droits du dossier
+chown -R www-data:www-data /var/sqlite-data
+chmod -R 775 /var/sqlite-data
+
+# Créer le fichier de base
+if [ ! -f /var/sqlite-data/database.sqlite ]; then
+    touch /var/sqlite-data/database.sqlite
+    echo "Base SQLite créée."
 fi
 
-# Lancer le service PHP-FPM (ou autre CMD défini)
-exec "$@"
+# Fixer les droits sur le fichier
+chown www-data:www-data /var/sqlite-data/database.sqlite
+chmod 664 /var/sqlite-data/database.sqlite
+
+# Créer la table si besoin
+echo "Exécution de setup.php"
+php /var/www/html/app/setup.php
+
+# Lancer PHP-FPM
+echo "Lancement de php-fpm"
+exec php-fpm

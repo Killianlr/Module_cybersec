@@ -5,18 +5,19 @@ services:
     build: 
       context: ./srcs/nginx
       dockerfile: Dockerfile
-    volumes:
-      - ./srcs/nginx/html:/usr/share/nginx/html
-      - ./srcs/php:/var/www/html
-      - ./srcs/nginx/conf/nginx.conf:/etc/nginx/nginx.conf
-      - ./srcs/nginx/conf/modsecurity.conf:/opt/modsecurity/modsecurity.conf
-      - ./srcs/nginx/modsecurity.log:/var/log/modsec_audit.log
     ports:
       - "8080:80"
+      - "443:443"
+    volumes:
+      - ./srcs/php/app:/var/www/html
+      - ./srcs/nginx/conf/nginx.conf:/etc/nginx/nginx.conf
+      - ./srcs/nginx/conf/modsecurity.conf:/opt/ModSecurity/modsecurity.conf
+      - ./srcs/nginx/conf/nginx.conf:/etc/nginx/nginx.conf
+      - ./srcs/nginx/certs:/etc/nginx/certs
     depends_on:
       - php
     networks:
-      - webnet
+      - trancendence
 
   php:
     image: php-fpm
@@ -26,39 +27,31 @@ services:
       dockerfile: Dockerfile
     volumes:
       - ./srcs/php:/var/www/html
-      # - ./srcs/php/data:/var/www/html/data
+      - sqlite-data:/var/sqlite-data
     expose:
       - "9000"
     networks:
-      - webnet
+      - trancendence
 
   vault:
-    image: vault:1.13.3
+    image: hashicorp/vault:1.15
     container_name: vault
     ports:
       - "8200:8200"
-    cap_add:
-      - IPC_LOCK
     environment:
       VAULT_DEV_ROOT_TOKEN_ID: root
       VAULT_DEV_LISTEN_ADDRESS: "0.0.0.0:8200"
-    command: server -dev
-    networks:
-      - webnet
-
-  vault-init:
-    image: curlimages/curl:latest
-    depends_on:
-      - vault
-    env_file:
-      - .env
+    cap_add:
+      - IPC_LOCK
     volumes:
-      - ./srcs/vault/vault-init.sh:/init.sh
-    entrypoint: [ "sh", "/init.sh" ]
+      - ./vault-data:/vault/file
+    command: vault server -dev
     networks:
-      - webnet
+      - trancendence
 
+volumes:
+  sqlite-data:
 
 networks:
-  webnet:
-    name: webnet
+  trancendence:
+    name: trancendence

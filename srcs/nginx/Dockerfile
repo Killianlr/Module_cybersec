@@ -1,6 +1,6 @@
 FROM nginx:1.25.3-alpine
 
-LABEL maintainer="ft_transcendence-security"
+LABEL maintainer="ft_transcendence"
 
 # Installer les dépendances nécessaires
 RUN apk add --no-cache git build-base libxml2-dev pcre-dev curl-dev \
@@ -21,7 +21,7 @@ RUN git clone --depth 1 -b v3.0.10 https://github.com/SpiderLabs/ModSecurity \
 # Télécharger et compiler le connecteur ModSecurity-nginx
 RUN git clone --depth 1 https://github.com/SpiderLabs/ModSecurity-nginx.git
 
-# Télécharger le code source de nginx correspondant à la version de l’image
+# Télécharger nginx
 RUN curl -O http://nginx.org/download/nginx-1.25.3.tar.gz \
  && tar zxvf nginx-1.25.3.tar.gz
 
@@ -34,11 +34,10 @@ RUN cd nginx-1.25.3 \
 # Configuration de base
 COPY conf/nginx.conf /etc/nginx/nginx.conf
 COPY conf/modsecurity.conf /opt/ModSecurity/modsecurity.conf
-RUN touch /var/log/modsec_audit.log && chown nginx:nginx /var/log/modsec_audit.log
-# RUN touch /var/log/modsec_audit.log
+RUN git clone --depth=1 https://github.com/coreruleset/coreruleset.git /opt/owasp-crs \
+ && cp /opt/owasp-crs/crs-setup.conf.example /opt/owasp-crs/crs-setup.conf
+RUN mkdir -p /var/log/modsecurity && \
+    touch /var/log/modsecurity/modsec_audit.log /var/log/modsecurity/debug.log
 
-# Copier un fichier HTML de test
 RUN mkdir -p /usr/share/nginx/html
-COPY html/index.html /usr/share/nginx/html/index.html
 
-# RUN rm -f /docker-entrypoint.d/20-envsubst-on-templates.sh
